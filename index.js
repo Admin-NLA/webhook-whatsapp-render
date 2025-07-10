@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 const VERIFY_TOKEN = 'zoho2025'; // Token que configuras en Meta para validar webhook
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.68062ff50f6169d840df4929a5582e14.a07cc51a40396d483f6eda549302ca06';
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.b577d6c8a89053d0951872bacd520289.3f8b6e86a70a939c1189fa843c2ef0e1';
 
 // Endpoint para validación inicial del webhook (GET)
 app.get('/webhook', (req, res) => {
