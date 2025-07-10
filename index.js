@@ -1,13 +1,13 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
+
 app.use(express.json());
 
-const VERIFY_TOKEN = 'zoho2025'; // El token que configuras en Meta para validar
+const VERIFY_TOKEN = 'zoho2025'; // Token que configuras en Meta para validar webhook
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.68062ff50f6169d840df4929a5582e14.a07cc51a40396d483f6eda549302ca06';
 
-
-// ✅ Validar Webhook con Meta (GET)
+// Endpoint para validación inicial del webhook (GET)
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -21,12 +21,12 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// ✅ Recibir mensajes de WhatsApp (POST)
+// Endpoint para recibir mensajes (POST)
 app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Recibido:', JSON.stringify(req.body));
 
-    // Enviar a Zoho con la propiedad payload
+    // Enviar a Zoho con la propiedad 'payload' que espera tu función Deluge
     const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, { payload: req.body }, {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -39,6 +39,7 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// Puerto para Render.com u otro hosting
 const PORT = parseInt(process.env.PORT) || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor escuchando en puerto ${PORT}`);
