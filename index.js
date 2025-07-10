@@ -3,10 +3,12 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-const VERIFY_TOKEN = 'zapoho123';
-const ZOHO_WEBHOOK_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.3108017b182d1dc9677424287c61bc39.4897864140817dd2dedef8d1e2034fcf';
+// Variables
+const VERIFY_TOKEN = 'zapoho123'; // <-- usa este mismo en Meta
+const ZOHO_WEBHOOK_URL = 'https://www.zohoapis.com/crm/v2/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.3108017b182d1dc9677424287c61bc39.4897864140817dd2dedef8d1e2034fcf';
 
-app.get('/', (req, res) => {
+// ✅ Endpoint para verificación de Meta
+app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -18,12 +20,16 @@ app.get('/', (req, res) => {
   }
 });
 
-app.post('/', async (req, res) => {
+// ✅ Endpoint para recibir mensajes
+app.post('/webhook', async (req, res) => {
   try {
     console.log("📥 Recibido:", JSON.stringify(req.body));
+    
+    // Enviar a función webhook_whatsapp_handler_1
     await axios.post(ZOHO_WEBHOOK_URL, req.body, {
       headers: { 'Content-Type': 'application/json' }
     });
+
     res.sendStatus(200);
   } catch (err) {
     console.error('❌ Error al enviar a Zoho:', err.message);
@@ -31,5 +37,13 @@ app.post('/', async (req, res) => {
   }
 });
 
+// ✅ Endpoint básico de prueba
+app.get('/', (req, res) => {
+  res.send('✅ Webhook activo');
+});
+
+// ✅ Escuchar puerto correcto (para Render)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor escuchando en puerto ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Servidor escuchando en puerto ${PORT}`);
+});
