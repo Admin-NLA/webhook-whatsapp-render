@@ -7,14 +7,14 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zapoho123'; // <-- usa este mismo en Meta
 const ZOHO_WEBHOOK_URL = 'https://www.zohoapis.com/crm/v2/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.3108017b182d1dc9677424287c61bc39.4897864140817dd2dedef8d1e2034fcf';
 
-// ✅ Endpoint para verificación de Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
+
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
     console.log('✅ Webhook verificado');
-    res.status(200).send(challenge);
+    res.status(200).send(challenge); // ← esto debe devolver el challenge puro
   } else {
     res.sendStatus(403);
   }
