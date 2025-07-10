@@ -27,13 +27,9 @@ app.post('/webhook', async (req, res) => {
     console.log('📥 Recibido:', JSON.stringify(req.body));
 
     // 🔁 Enviar payload como { payload: req.body }
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, {
-      payload: req.body
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    await axios.post(ZOHO_FUNCTION_URL, req.body, {
+  headers: { 'Content-Type': 'application/json' }
+});
 
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
     res.sendStatus(200);
