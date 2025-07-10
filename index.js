@@ -5,7 +5,7 @@ app.use(express.json());
 
 // Variables
 const VERIFY_TOKEN = 'zapoho123'; // <-- usa este mismo en Meta
-const ZOHO_WEBHOOK_URL = 'https://www.zohoapis.com/crm/v2/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.3108017b182d1dc9677424287c61bc39.4897864140817dd2dedef8d1e2034fcf';
+const ZOHO_WEBHOOK_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.afbf8bbbaaca1c2319d8c9d17c25ff6c.8e206055956b67927c95349b694a45d5';
 
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
