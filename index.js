@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 });
 
 // ✅ Escuchar puerto correcto (para Render)
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT) || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor escuchando en puerto ${PORT}`);
 });
