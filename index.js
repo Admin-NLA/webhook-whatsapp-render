@@ -25,16 +25,23 @@ app.get('/webhook', (req, res) => {
 app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Recibido:', JSON.stringify(req.body));
+    const mensajeData = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const numero = mensajeData?.from;
+    const mensaje = mensajeData?.text?.body;
 
-    // Enviar a Zoho con la propiedad 'payload' que espera tu función Deluge
-    await axios.post(ZOHO_FUNCTION_URL, {
-  numero: req.body.entry[0].changes[0].value.messages[0].from,
-  mensaje: req.body.entry[0].changes[0].value.messages[0].text.body
-}, {
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+    // Validación rápida
+    if (!numero || !mensaje) {
+      console.log('❌ Número o mensaje no encontrado en el payload');
+      return res.sendStatus(400);
+    }
+
+    // ✅ Llamar a Zoho con parámetros planos
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, {
+      numero: numero,
+      mensaje: mensaje
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
 
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
     res.sendStatus(200);
