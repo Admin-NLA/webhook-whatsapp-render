@@ -27,9 +27,14 @@ app.post('/webhook', async (req, res) => {
     console.log('📥 Recibido:', JSON.stringify(req.body));
 
     // Enviar a Zoho con la propiedad 'payload' que espera tu función Deluge
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, { payload: req.body }, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    await axios.post(ZOHO_FUNCTION_URL, {
+  numero: req.body.entry[0].changes[0].value.messages[0].from,
+  mensaje: req.body.entry[0].changes[0].value.messages[0].text.body
+}, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
     res.sendStatus(200);
