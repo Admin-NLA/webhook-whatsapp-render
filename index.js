@@ -6,7 +6,8 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025'; // El token que configuras en Meta para validar
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.fc864949ec8b86d4d7f29d06b59645ca.56181fa66c0726afcc57ccfaecf6c592';
 
-// Validar webhook con Meta (GET)
+
+// ✅ Validar Webhook con Meta (GET)
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -20,13 +21,18 @@ app.get('/webhook', (req, res) => {
   }
 });
 
+// ✅ Recibir mensajes de WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Recibido:', JSON.stringify(req.body));
 
-    // ✅ Enviar payload completo como JSON
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, req.body, {
-    headers: { 'Content-Type': 'application/json' }
+    // 🔁 Enviar payload como { payload: req.body }
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, {
+      payload: req.body
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
