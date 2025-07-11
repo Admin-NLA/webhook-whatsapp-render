@@ -32,10 +32,10 @@ app.post('/webhook', async (req, res) => {
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
-    const message = value?.messages?.[0];
+    const firstMessage = value?.messages?.[0]; // ✅ Accede correctamente al mensaje
 
-    const numero = message?.from;
-    const mensaje = message?.text?.body;
+    const numero = firstMessage?.from;
+    const mensaje = firstMessage?.text?.body;
 
     // ✅ Mostrar en consola
     console.log("📞 Número:", numero);
