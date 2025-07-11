@@ -26,34 +26,22 @@ app.get('/webhook', (req, res) => {
 // 📥 Recepción de mensajes de WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
-    console.log('📥 Recibido:', JSON.stringify(req.body));
+    const mensaje = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const numero = mensaje?.from;
+    const texto = mensaje?.text?.body;
 
-    const entry = req.body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-    const messageObj = value?.messages?.[0];
+    console.log("📤 Enviando a Zoho...");
+    console.log("📞 Número:", numero);
+    console.log("💬 Mensaje:", texto);
 
-    if (!messageObj) {
-      console.log('⚠️ No hay mensajes en el payload');
-      return res.sendStatus(200);
-    }
-
-    const numero = messageObj.from;
-    const mensaje = messageObj.text?.body;
-
-    console.log('📤 Enviando a Zoho...');
-    console.log('📞 Número:', numero);
-    console.log('💬 Mensaje:', mensaje);
-
-    // Enviar solo número y mensaje como JSON plano
     const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, {
-      numero,
-      mensaje
+      numero: numero,
+      mensaje: texto
     }, {
       headers: { 'Content-Type': 'application/json' }
     });
 
-    console.log('✅ Enviado a Zoho:', zohoResponse.data);
+    console.log("✅ Enviado a Zoho:", zohoResponse.data);
     res.sendStatus(200);
   } catch (error) {
     console.error('❌ Error enviando a Zoho:', error.message);
