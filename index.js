@@ -26,7 +26,7 @@ app.get('/webhook', (req, res) => {
 // 📩 Recepción de mensajes de WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
-    console.log('📥 Recibido:', JSON.stringify(body));
+    console.log('📥 Recibido:', JSON.stringify(req.body));
 
    // 👇 Extraer valores del JSO
     const entry = req.body.entry?.[0];
