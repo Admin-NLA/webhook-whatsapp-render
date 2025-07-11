@@ -26,34 +26,30 @@ app.post('/webhook', async (req, res) => {
     console.log('📥 Recibido:', JSON.stringify(req.body));
 
     // Extraer datos del body con seguridad
-    const entry = req.body.entry && req.body.entry[0];
-    const changes = entry && entry.changes && entry.changes[0];
-    const value = changes && changes.value;
-    const message = value && value.messages && value.messages[0];
+    const entry = req.body.entry?.[0];
+    const change = entry?.changes?.[0];
+    const value = change?.value;
+    const firstMessage = value?.messages?.[0]; // ✅ Corrección aquí
 
-    if (!message) {
-      console.log('⚠️ No hay mensaje en el webhook');
-      return res.sendStatus(200);
-    }
+    const numero = firstMessage?.from;
+    const mensaje = firstMessage?.text?.body;
 
-    const numero = message.from || '';
-    const texto = message.text && message.text.body ? message.text.body : '';
+    console.log("📞 Número:", numero);
+    console.log("💬 Mensaje:", mensaje);
 
-    console.log('📞 Número:', numero);
-    console.log('💬 Mensaje:', texto);
-
-    // Construir params para enviar a Zoho
     const params = new URLSearchParams();
-    params.append('numero', numero);
-    params.append('mensaje', texto);
+    params.append("numero", numero || "");
+    params.append("mensaje", mensaje || "");
 
-    // POST a Zoho usando string URL encoded
+    console.log('📤 Enviando a Zoho...');
+
     const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
 
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
-
     res.sendStatus(200);
   } catch (error) {
     console.error('❌ Error enviando a Zoho:', error.message);
