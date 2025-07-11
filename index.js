@@ -10,48 +10,53 @@ const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_wha
 
 // 🔐 Verificación del Webhook (GET) para Meta
 app.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
+    const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
     console.log('✅ Webhook verificado por Meta');
-    res.status(200).send(challenge);
-  } else {
-    console.warn('❌ Verificación fallida');
-    res.sendStatus(403);
+    return res.status(200).send(challenge);
   }
+  res.sendStatus(403);
 });
 
-// 📩 Recepción de mensajes de WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
-    const entry = req.body.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value = change?.value;
-    const messageData = value?.messages?.[0];
+    console.log('📥 Recibido:', JSON.stringify(req.body));
 
-    const numero = messageData?.from || "";
-    const mensaje = messageData?.text?.body || "";
+    // Extraer datos del body con seguridad
+    const entry = req.body.entry && req.body.entry[0];
+    const changes = entry && entry.changes && entry.changes[0];
+    const value = changes && changes.value;
+    const message = value && value.messages && value.messages[0];
 
-    console.log("📞 Número:", numero);
-    console.log("💬 Mensaje:", mensaje);
+    if (!message) {
+      console.log('⚠️ No hay mensaje en el webhook');
+      return res.sendStatus(200);
+    }
 
-    // Enviar solo los strings numero y mensaje con form-urlencoded
+    const numero = message.from || '';
+    const texto = message.text && message.text.body ? message.text.body : '';
+
+    console.log('📞 Número:', numero);
+    console.log('💬 Mensaje:', texto);
+
+    // Construir params para enviar a Zoho
     const params = new URLSearchParams();
-    params.append("numero", numero);
-    params.append("mensaje", mensaje);
+    params.append('numero', numero);
+    params.append('mensaje', texto);
 
+    // POST a Zoho usando string URL encoded
     const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params.toString(), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    console.log("✅ Enviado a Zoho:", zohoResponse.data);
+    console.log('✅ Enviado a Zoho:', zohoResponse.data);
+
     res.sendStatus(200);
   } catch (error) {
-    console.error("❌ Error enviando a Zoho:", error.message);
+    console.error('❌ Error enviando a Zoho:', error.message);
     res.sendStatus(500);
   }
 });
