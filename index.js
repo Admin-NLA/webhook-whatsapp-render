@@ -50,13 +50,16 @@ app.post('/webhook', async (req, res) => {
 
     // ✅ Formatear datos correctamente como x-www-form-urlencoded
   const params = new URLSearchParams();
-  params.append("numero", numero);
-  params.append("mensaje", mensaje);
+params.append("numero", numero);
+params.append("mensaje", mensaje);
 
-  const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
-    headers: {
+const zohoResponse = await axios({
+  method: 'post',
+  url: ZOHO_FUNCTION_URL,
+  headers: {
     'Content-Type': 'application/x-www-form-urlencoded'
-  }
+  },
+  data: params.toString() // 👈 ESTE DETALLE IMPORTANTE
 });
 
     console.log("✅ Respuesta de Zoho:", zohoResponse.data);
