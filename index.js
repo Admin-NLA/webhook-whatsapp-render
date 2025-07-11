@@ -1,9 +1,8 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs'); // 👈 Librería para formatear correctamente el body
 const app = express();
-
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // 👈 Necesario para manejar x-www-form-urlencoded
 
 // Token de verificación con Meta
 const VERIFY_TOKEN = 'zoho2025';
@@ -49,18 +48,18 @@ app.post('/webhook', async (req, res) => {
     }
 
     // ✅ Formatear datos correctamente como x-www-form-urlencoded
-  const params = new URLSearchParams();
-params.append("numero", numero);
-params.append("mensaje", mensaje);
-
-const zohoResponse = await axios({
-  method: 'post',
-  url: ZOHO_FUNCTION_URL,
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded'
-  },
-  data: params.toString() // 👈 ESTE DETALLE IMPORTANTE
-});
+  const zohoResponse = await axios.post(
+      ZOHO_FUNCTION_URL,
+      new URLSearchParams({
+        numero: numero,
+        mensaje: mensaje
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
 
     console.log("✅ Respuesta de Zoho:", zohoResponse.data);
     res.sendStatus(200);
