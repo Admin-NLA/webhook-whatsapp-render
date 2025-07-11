@@ -42,11 +42,10 @@ app.post('/webhook', async (req, res) => {
     const mensaje = messageData.text && messageData.text.body || "";
 
     // Enviar sólo { numero, mensaje } a Zoho CRM (función Deluge espera estos parámetros simples)
-    await axios.post(ZOHO_FUNCTION_URL, { numero, mensaje }, {
+   const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, { numero, mensaje }, {
   headers: { 'Content-Type': 'application/json' }
 });
-
-
+    
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
     res.sendStatus(200);
 
