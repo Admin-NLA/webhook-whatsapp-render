@@ -28,32 +28,31 @@ app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Recibido:', JSON.stringify(req.body));
 
-   // 👇 Extraer valores del JSO
+    // ✅ Extraer datos del mensaje
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
-    const firstMessage = messages?.[0];
+    const message = value?.messages?.[0];
 
-    const numero = firstMessage?.from;
-    const mensaje = firstMessage?.text?.body;
+    const numero = message?.from;
+    const mensaje = message?.text?.body;
 
     // ✅ Mostrar en consola
     console.log("📞 Número:", numero);
     console.log("💬 Mensaje:", mensaje);
-    // 🚫 Si número o mensaje son undefined, llegarán como null a Zoho
 
-    // ✅ Construir URLSearchParams
+    // ✅ Construir y enviar como URLSearchParams
     const params = new URLSearchParams();
     params.append("numero", numero || "");
     params.append("mensaje", mensaje || "");
 
     console.log('📤 Enviando a Zoho...');
     
-   await axios.post(ZOHO_FUNCTION_URL, params, {
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded'
-  }
-});
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
 
     console.log('✅ Enviado a Zoho:', zohoResponse.data);
     res.sendStatus(200);
@@ -61,7 +60,7 @@ app.post('/webhook', async (req, res) => {
     console.error('❌ Error enviando a Zoho:', error.message);
     res.sendStatus(500);
   }
-});    
+});
 
 // 🚀 Iniciar servidor en Render
 const PORT = parseInt(process.env.PORT) || 3000;
