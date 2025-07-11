@@ -5,7 +5,6 @@ app.use(express.json());
 
 // Tu token de verificación de Meta (WhatsApp)
 const VERIFY_TOKEN = 'zoho2025';
-
 // URL de tu función publicada en Zoho CRM
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.86443ae1903577068c825f1956224904.fe30eed22599ca84828f4e87f25b7449';
 
@@ -27,33 +26,32 @@ app.get('/webhook', (req, res) => {
 // 📩 Recepción de mensajes de WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
-    const body = req.body;
     console.log('📥 Recibido:', JSON.stringify(body));
 
-    // Extraer número y mensaje
-    const entry = body.entry?.[0];
+   // 👇 Extraer valores del JSO
+    const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
-    const messageData = value?.messages?.[0];
+    const firstMessage = messages?.[0];
 
-    const numero = messageData?.from || null;
-    const mensaje = messageData?.text?.body || null;
+    const numero = firstMessage?.from;
+    const mensaje = firstMessage?.text?.body;
 
+    // ✅ Mostrar en consola
     console.log("📞 Número:", numero);
     console.log("💬 Mensaje:", mensaje);
+    // 🚫 Si número o mensaje son undefined, llegarán como null a Zoho
 
-    if (!numero || !mensaje) {
-      console.warn("⚠️ No se pudo extraer número o mensaje del webhook.");
-      return res.sendStatus(400);
-    }
+    // ✅ Construir URLSearchParams
+    const params = new URLSearchParams();
+    params.append("numero", numero || "");
+    params.append("mensaje", mensaje || "");
 
-    // Enviar a función de Zoho CRM
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, {
-      numero: numero,
-      mensaje: mensaje
-    }, {
+    console.log('📤 Enviando a Zoho...');
+    
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
     });
 
@@ -63,7 +61,7 @@ app.post('/webhook', async (req, res) => {
     console.error('❌ Error enviando a Zoho:', error.message);
     res.sendStatus(500);
   }
-});
+});    
 
 // 🚀 Iniciar servidor en Render
 const PORT = parseInt(process.env.PORT) || 3000;
