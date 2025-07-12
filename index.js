@@ -1,16 +1,14 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // 👈 Necesario para manejar x-www-form-urlencoded
 
-// Token de verificación con Meta
+// Token y URL de Zoho
 const VERIFY_TOKEN = 'zoho2025';
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.03b63b6e4e623744f73f7fffbddb4902.8699f916ad4a321667d278b4e23182c4';
 
-// URL de tu función publicada en Zoho CRM con API Key
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/webhook_whatsapp_handler_1/actions/execute?auth_type=apikey&zapikey=1003.cdcbaadc01252ad59c6ca63009648323.c968f933ab267d4c01bda867eedd8426';
-
-// ✅ Validación del webhook de Meta
+// Validación Meta Webhook (GET)
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -25,46 +23,42 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// ✅ Recepción de mensajes de WhatsApp
+// Recepción mensajes WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Payload recibido:', JSON.stringify(req.body));
 
+    // Extraer número y mensaje del payload Meta
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
     const firstMessage = value?.messages?.[0];
 
-    const numero = firstMessage?.from;
-    const mensaje = firstMessage?.text?.body;
+    const numero = firstMessage?.from || "";
+    const mensaje = firstMessage?.text?.body || "";
 
     console.log("📞 Número:", numero);
     console.log("💬 Mensaje:", mensaje);
 
-    // Validar que haya datos antes de enviar
-    if (!numero || !mensaje) {
-      console.warn("⚠️ Número o mensaje vacío, no se enviará a Zoho");
-      return res.sendStatus(200);
-    }
+    // Preparar payload para Zoho (JSON con input)
+    const payload = {
+      input: {
+        numero,
+        mensaje,
+      },
+    };
 
-    // ✅ Formatear datos correctamente como x-www-form-urlencoded
-  const zohoResponse = await axios.post(
-      ZOHO_FUNCTION_URL,
-      new URLSearchParams({
-        numero: numero,
-        mensaje: mensaje
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    );
+    console.log("📤 Enviando a Zoho:", JSON.stringify(payload));
+
+    // Enviar a Zoho con JSON
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, payload, {
+      headers: { 'Content-Type': 'application/json' },
+    });
 
     console.log("✅ Respuesta de Zoho:", zohoResponse.data);
     res.sendStatus(200);
   } catch (error) {
-    console.error("❌ Error al enviar a Zoho:", error.message);
+    console.error("❌ Error enviando a Zoho:", error.message);
     res.sendStatus(500);
   }
 });
