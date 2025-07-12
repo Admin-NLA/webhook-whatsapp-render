@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs'); // npm install qs
+const qs = require('qs');
 const app = express();
 
 app.use(express.json());
@@ -9,7 +9,7 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.03b63b6e4e623744f73f7fffbddb4902.8699f916ad4a321667d278b4e23182c4';
 
-// Validación webhook Meta (GET)
+// ✅ Validación del webhook de Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -24,11 +24,12 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// Recepción mensajes WhatsApp (POST)
+// ✅ Recepción de mensajes entrantes de WhatsApp
 app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Payload recibido:', JSON.stringify(req.body));
 
+    // Extraer número y mensaje desde estructura de WhatsApp
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
@@ -37,18 +38,24 @@ app.post('/webhook', async (req, res) => {
     const numero = firstMessage?.from || "";
     const mensaje = firstMessage?.text?.body || "";
 
-    console.log("📞 Número:", numero);
-    console.log("💬 Mensaje:", mensaje);
+    console.log("🧪 Número extraído:", numero);
+    console.log("🧪 Mensaje extraído:", mensaje);
 
-    // Preparar datos x-www-form-urlencoded
+    // Validar antes de enviar
+    if (!numero || !mensaje) {
+      console.warn("⚠️ Número o mensaje vacíos, no se enviará a Zoho.");
+      return res.sendStatus(400);
+    }
+
+    // Convertir a formato x-www-form-urlencoded
     const params = qs.stringify({ numero, mensaje });
 
-    // Antes de enviar a Zoho, imprime el payload:
-console.log("📤 Payload a Zoho (form-urlencoded):", params);
+    console.log("📤 Payload a Zoho:", params);
 
-const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-});
+    // Enviar a Zoho
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
 
     console.log("✅ Respuesta de Zoho:", zohoResponse.data);
     res.sendStatus(200);
