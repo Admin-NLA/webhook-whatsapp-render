@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const qs = require('qs'); // npm install qs
 const app = express();
 
 app.use(express.json());
@@ -8,7 +9,7 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.03b63b6e4e623744f73f7fffbddb4902.8699f916ad4a321667d278b4e23182c4';
 
-// Validación Meta Webhook (GET)
+// Validación webhook Meta (GET)
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -28,7 +29,6 @@ app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Payload recibido:', JSON.stringify(req.body));
 
-    // Extraer número y mensaje del payload Meta
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
@@ -40,19 +40,14 @@ app.post('/webhook', async (req, res) => {
     console.log("📞 Número:", numero);
     console.log("💬 Mensaje:", mensaje);
 
-    // Preparar payload para Zoho (JSON con input)
-    const payload = {
-      input: {
-        numero,
-        mensaje,
-      },
-    };
+    // Preparar datos x-www-form-urlencoded
+    const params = qs.stringify({ numero, mensaje });
 
-    console.log("📤 Enviando a Zoho:", JSON.stringify(payload));
+    console.log("📤 Enviando a Zoho:", params);
 
-    // Enviar a Zoho con JSON
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: { 'Content-Type': 'application/json' },
+    // Enviar a Zoho
+    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
     console.log("✅ Respuesta de Zoho:", zohoResponse.data);
