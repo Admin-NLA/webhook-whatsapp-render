@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 
 // ⚙️ Access Token de OAuth Zoho
-const ZOHO_ACCESS_TOKEN = '000.138b739e688df47f07b8b3a096568ebb.88fe15b8a54693b314573b7951fb7fb6'; // Reemplaza por tu token válido
+const ZOHO_ACCESS_TOKEN = '1000.138b739e688df47f07b8b3a096568ebb.88fe15b8a54693b314573b7951fb7fb6'; // Reemplaza por tu token válido
 
 // ⚙️ URL de la función Deluge (sin zapikey)
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=oauth';
