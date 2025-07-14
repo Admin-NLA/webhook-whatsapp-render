@@ -24,12 +24,12 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// ✅ Recepción de mensajes entrantes de WhatsApp
+// ✅ Recepción de mensajes entrantes desde WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
   try {
     console.log('📥 Payload recibido:', JSON.stringify(req.body));
 
-    // Extraer número y mensaje desde estructura de WhatsApp
+    // 📤 Extraer los datos relevantes del mensaje de WhatsApp
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
@@ -38,21 +38,24 @@ app.post('/webhook', async (req, res) => {
     const numero = firstMessage?.from || "";
     const mensaje = firstMessage?.text?.body || "";
 
-    console.log("🧪 Número extraído:", numero);
+    console.log("🧪 Número original extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    // Validar antes de enviar
-    if (!numero || !mensaje) {
+    // ✅ Validación adicional de longitud y limpieza del número
+    const numeroLimpio = numero.replace(/[^\d]/g, '').slice(0, 13);  // Elimina caracteres no numéricos y corta a 13 dígitos
+    console.log("🔎 Número limpio:", numeroLimpio, "| longitud:", numeroLimpio.length);
+
+    // ⚠️ Validar que el número y mensaje no estén vacíos
+    if (!numeroLimpio || !mensaje) {
       console.warn("⚠️ Número o mensaje vacíos, no se enviará a Zoho.");
       return res.sendStatus(400);
     }
 
-    // Convertir a formato x-www-form-urlencoded
-    const params = qs.stringify({ numero, mensaje });
-
+    // 📦 Convertir los datos a formato x-www-form-urlencoded
+    const params = qs.stringify({ numero: numeroLimpio, mensaje });
     console.log("📤 Payload a Zoho:", params);
 
-    // Enviar a Zoho
+    // 🚀 Enviar los datos a Zoho CRM vía Deluge Function
     const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
