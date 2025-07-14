@@ -8,7 +8,7 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_standalone/actions/execute?auth_type=apikey&zapikey=1003.b22046226a141976ea4c8a51cf8eb73e.f16aa9a4d222d6064995247bdd2bfd7c';
 
-// Verificación webhook Meta
+// RUTA para verificar webhook de Meta (GET)
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -23,17 +23,16 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// Procesar mensajes entrantes
+// RUTA para procesar mensajes entrantes (POST)
 app.post('/webhook', async (req, res) => {
   try {
-    console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
-
+    // Extraer datos del body (según payload WhatsApp)
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
 
     if (!value?.messages || !value.messages[0]) {
-      console.warn("⚠️ No se encontró value.messages[0], ignorando evento.");
+      console.warn("⚠️ No hay mensajes en el payload, ignorando");
       return res.sendStatus(200);
     }
 
@@ -61,34 +60,32 @@ app.post('/webhook', async (req, res) => {
       mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
     }
 
-    console.log("🧪 Número extraído:", numero);
-    console.log("🧪 Mensaje extraído:", mensaje);
-
+    // Validar datos
     if (!numero || !mensaje) {
-      console.warn("⚠️ Número o mensaje vacíos. No se enviará a Zoho.");
+      console.warn("⚠️ Número o mensaje vacíos");
       return res.sendStatus(400);
     }
 
-    // Prepara payload JSON para Zoho standalone (content-type: application/json)
+    // Construir payload para Zoho
     const payload = {
       numero,
       mensaje,
-      json_payload: JSON.stringify(req.body),
+      json_payload: JSON.stringify(req.body)
     };
 
-    console.log("📤 Payload que se enviará a Zoho (JSON):", JSON.stringify(payload));
+    console.log("📤 Enviando a Zoho:", payload);
 
+    // Llamar función Zoho con axios POST JSON
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    console.log("✅ Enviado a Zoho:", response.data);
+    console.log("✅ Respuesta Zoho:", response.data);
+
     res.sendStatus(200);
-  } catch (err) {
-    console.error("❌ Error procesando webhook:", err.message);
-    res.status(500).send(`Error interno: ${err.message}`);
+  } catch (error) {
+    console.error("❌ Error procesando webhook:", error.message);
+    res.status(500).send("Error interno");
   }
 });
 
