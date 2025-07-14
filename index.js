@@ -9,22 +9,22 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.7ac01f6d1f55de25633046b3881a02ed.3936bae7c6809a39aded361220909e9b';
 
-// ✅ Validación del Webhook de Meta
+// Verificación webhook Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('✅ Webhook verificado');
+    console.log('✅ Webhook verificado con Meta');
     res.status(200).send(challenge);
   } else {
-    console.warn('❌ Verificación fallida');
+    console.warn('❌ Verificación de webhook fallida');
     res.sendStatus(403);
   }
 });
 
-// ✅ Procesamiento de mensajes entrantes de WhatsApp
+// Procesar mensajes entrantes WhatsApp
 app.post('/webhook', async (req, res) => {
   try {
     console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
@@ -35,9 +35,9 @@ app.post('/webhook', async (req, res) => {
     const message = value?.messages?.[0];
 
     const numero = message?.from || "";
+
     let mensaje = "";
 
-    // 🔍 Lógica robusta para tipos de mensaje
     if (message?.text?.body) {
       mensaje = message.text.body;
     } else if (message?.type === "image" && message?.image?.caption) {
@@ -64,10 +64,11 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(400);
     }
 
-    const params = qs.stringify({ numero, mensaje, json_payload });
+    // Enviar JSON plano a Zoho
+    const payload = { numero, mensaje, json_payload };
 
-    const response = await axios.post(ZOHO_FUNCTION_URL, params, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
+      headers: { 'Content-Type': 'application/json' }
     });
 
     console.log("✅ Enviado a Zoho:", response.data);
