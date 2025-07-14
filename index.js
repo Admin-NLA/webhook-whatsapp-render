@@ -1,17 +1,14 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs'); //✅ Para codificar como x-www-form-urlencoded
 const app = express();
 
 app.use(express.json());
 
-// Token y URL de Zoho
+// Configuración
 const VERIFY_TOKEN = 'zoho2025';
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.88741b916f8e12be275f2badb8cbbe9e.3471736aa43fcd2d436bcbc024340830';
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_standalone/actions/execute?auth_type=apikey&zapikey=1003.b22046226a141976ea4c8a51cf8eb73e.f16aa9a4d222d6064995247bdd2bfd7c';
 
-/* -------------------------------------------
-   ✅ 1. VERIFICACIÓN WEBHOOK DE META
--------------------------------------------- */
+// Verificación webhook Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -19,32 +16,31 @@ app.get('/webhook', (req, res) => {
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
     console.log('✅ Webhook verificado con Meta');
-    res.status(200).send(challenge);
+    return res.status(200).send(challenge);
   } else {
     console.warn('❌ Verificación fallida');
-    res.sendStatus(403);
+    return res.sendStatus(403);
   }
 });
 
-/* -------------------------------------------
-   ✅ 2. PROCESAR MENSAJES ENTRANTES
--------------------------------------------- */
+// Procesar mensajes entrantes
 app.post('/webhook', async (req, res) => {
   try {
+    console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
+
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
 
     if (!value?.messages || !value.messages[0]) {
       console.warn("⚠️ No se encontró value.messages[0], ignorando evento.");
-      return res.sendStatus(200); // OK, ignorar este evento
+      return res.sendStatus(200);
     }
 
     const message = value.messages[0];
     const numero = message.from || "";
     let mensaje = "";
 
-    // Extraer contenido según tipo de mensaje
     if (message?.text?.body) {
       mensaje = message.text.body;
     } else if (message?.type === "image" && message?.image?.caption) {
@@ -65,29 +61,26 @@ app.post('/webhook', async (req, res) => {
       mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
     }
 
-    // Log intermedio
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    // Validar antes de enviar
     if (!numero || !mensaje) {
       console.warn("⚠️ Número o mensaje vacíos. No se enviará a Zoho.");
       return res.sendStatus(400);
     }
 
-    // Codificar como x-www-form-urlencoded
-    const payload = qs.stringify({
+    // Prepara payload JSON para Zoho standalone (content-type: application/json)
+    const payload = {
       numero,
       mensaje,
-      json_payload: JSON.stringify(req.body) // opcional: enviar todo el JSON
-    });
+      json_payload: JSON.stringify(req.body),
+    };
 
-    console.log("📤 Payload que se enviará a Zoho (form-urlencoded):", payload);
+    console.log("📤 Payload que se enviará a Zoho (JSON):", JSON.stringify(payload));
 
-    // Enviar a Zoho
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json',
       }
     });
 
@@ -99,9 +92,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-/* -------------------------------------------
-   🚀 INICIAR SERVIDOR
--------------------------------------------- */
 const PORT = parseInt(process.env.PORT) || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor escuchando en puerto ${PORT}`);
