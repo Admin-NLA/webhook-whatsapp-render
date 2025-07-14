@@ -64,10 +64,8 @@ app.post('/webhook', async (req, res) => {
       } else {
         mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
       }
-    } else {
-      console.warn("⚠️ No se encontró value.messages[0]");
-    }
-
+    } 
+     
     // Log intermedio
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
@@ -84,6 +82,8 @@ app.post('/webhook', async (req, res) => {
       mensaje,
       json_payload: JSON.stringify(req.body) // opcional: enviar todo el JSON
     });
+
+     console.log("📤 Payload que se enviará a Zoho (form-urlencoded):", payload);
 
     // Enviar a Zoho
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
