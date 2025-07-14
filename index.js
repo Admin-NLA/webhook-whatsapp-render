@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs');  // ✅ Para codificar como x-www-form-urlencoded
+ //  const qs = require('qs'); ✅ Para codificar como x-www-form-urlencoded
 const app = express();
 
 app.use(express.json());
@@ -9,7 +9,7 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.7ac01f6d1f55de25633046b3881a02ed.3936bae7c6809a39aded361220909e9b';
 
-// Verificación webhook Meta
+// ✅ Validación del Webhook de Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -19,12 +19,12 @@ app.get('/webhook', (req, res) => {
     console.log('✅ Webhook verificado con Meta');
     res.status(200).send(challenge);
   } else {
-    console.warn('❌ Verificación de webhook fallida');
+    console.warn('❌ Verificación fallida');
     res.sendStatus(403);
   }
 });
 
-// Procesar mensajes entrantes WhatsApp
+// ✅ Manejo de mensajes entrantes
 app.post('/webhook', async (req, res) => {
   try {
     console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
@@ -35,9 +35,9 @@ app.post('/webhook', async (req, res) => {
     const message = value?.messages?.[0];
 
     const numero = message?.from || "";
-
     let mensaje = "";
 
+    // ✅ Extracción robusta de contenido según tipo
     if (message?.text?.body) {
       mensaje = message.text.body;
     } else if (message?.type === "image" && message?.image?.caption) {
@@ -50,8 +50,12 @@ app.post('/webhook', async (req, res) => {
       mensaje = "[Video recibido]";
     } else if (message?.type === "sticker") {
       mensaje = "[Sticker recibido]";
+    } else if (message?.type === "button") {
+      mensaje = `[Botón presionado: ${message.button.text}]`;
+    } else if (message?.type === "interactive") {
+      mensaje = `[Interacción: ${JSON.stringify(message.interactive)}]`;
     } else {
-      mensaje = `[${message?.type || "mensaje no reconocido"} recibido]`;
+      mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
     }
 
     const json_payload = JSON.stringify(req.body);
@@ -64,11 +68,17 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(400);
     }
 
-    // Enviar JSON plano a Zoho
-    const payload = { numero, mensaje, json_payload };
+    // ✅ Enviar a Zoho como JSON
+    const payload = {
+      numero,
+      mensaje,
+      json_payload
+    };
 
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     console.log("✅ Enviado a Zoho:", response.data);
