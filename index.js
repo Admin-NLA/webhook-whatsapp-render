@@ -28,9 +28,17 @@ async function ensureAccessToken() {
 
     try {
       const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', params);
+      console.log('Respuesta renovación token:', response.data);
+
       accessToken = response.data.access_token;
+
+      if (!accessToken) {
+        throw new Error('No se recibió access_token en la respuesta.');
+      }
+
       const expiresIn = response.data.expires_in; // en segundos
-      tokenExpiresAt = now + (expiresIn - 60) * 1000; // renovar 1 min antes de expirar
+      tokenExpiresAt = now + (expiresIn - 60) * 1000; // renovar 1 min antes
+
       console.log('✅ Nuevo access_token obtenido:', accessToken.slice(0, 10) + '...');
     } catch (error) {
       console.error('❌ Error al renovar token:', error.response?.data || error.message);
@@ -38,6 +46,7 @@ async function ensureAccessToken() {
     }
   }
 }
+
 
 // Endpoint para webhook WhatsApp
 app.post('/webhook', async (req, res) => {
