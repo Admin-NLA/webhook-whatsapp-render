@@ -44,12 +44,16 @@ app.post('/webhook', async (req, res) => {
 
     console.log("📤 Enviando a Zoho (OAuth):", payload);
 
-    const response = await axios.post(ZOHO_FUNCTION_URL, formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Zoho-oauthtoken ${ZOHO_ACCESS_TOKEN}`
-      }
-    });
+    const response = await axios.post(
+  ZOHO_FUNCTION_URL,
+  formData,
+  {
+    headers: {
+      'Authorization': `Zoho-oauthtoken ${ACCESS_TOKEN}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }
+);
 
     console.log("✅ Respuesta Zoho:", response.data);
     res.sendStatus(200);
