@@ -1,8 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 const qs = require('qs'); // ✅ Para codificar x-www-form-urlencoded
-const app = express();
 
+const app = express();
 app.use(express.json());
 
 // ✅ Token y URL de función Deluge (standalone)
@@ -15,41 +15,25 @@ app.post('/webhook', async (req, res) => {
     const value = entry?.changes?.[0]?.value;
     const message = value?.messages?.[0];
 
-    if (!message || !message.from) {
-      console.log("⚠️ Sin mensaje válido, ignorando.");
+    if (!message?.from || !message.text?.body) {
+      console.log("⚠️ Mensaje vacío o tipo no compatible.");
       return res.sendStatus(200);
     }
 
     const numero = message.from;
-    let mensaje = "";
+    const mensaje = message.text.body;
+    const payload = {
+      numero,
+      mensaje,
+      json_payload: JSON.stringify(req.body)
+    };
 
-    if (message.text?.body) {
-      mensaje = message.text.body;
-    } else {
-      mensaje = "[Tipo de mensaje no compatible]";
-    }
+    const formData = qs.stringify(payload);
+    console.log("📤 Enviando a Zoho:", formData);
 
-    console.log("🧪 Número extraído:", numero);
-    console.log("🧪 Mensaje extraído:", mensaje);
-
-    // Crear el payload como objeto plano
-const payload = {
-  numero: numero,
-  mensaje: mensaje,
-  json_payload: JSON.stringify(req.body),
-};
-    
-// Serializar correctamente el payload
-const formData = qs.stringify(payload);
-    
-    console.log("📤 Enviando a Zoho:", payload);
-
- // ✅ ASIGNAR LA RESPUESTA
-await axios.post(ZOHO_FUNCTION_URL, formData, {
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-  },
-});
+    const response = await axios.post(ZOHO_FUNCTION_URL, formData, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
 
     console.log("✅ Respuesta Zoho:", response.data);
     res.sendStatus(200);
