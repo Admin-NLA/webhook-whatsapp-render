@@ -17,37 +17,27 @@ app.post('/webhook', async (req, res) => {
     const value = entry?.changes?.[0]?.value;
     const message = value?.messages?.[0];
 
-    if (!message || !message.from) {
-      console.log("⚠️ Mensaje no válido, se ignora.");
-      return res.sendStatus(200);
-    }
+    if (!message || !message.from) return res.sendStatus(200);
+     
+    const payload = {
+      numero: message.from,
+      mensaje: message.text?.body || '[tipo no soportado]',
+      json_payload: req.body
+    };
 
-    const numero = message.from;
-    const mensaje = message.text?.body || '[Tipo no soportado]';
+    console.log('🧪 Enviando payload completo a Zoho:', payload);
 
-    console.log("🧪 Número extraído:", numero);
-    console.log("🧪 Mensaje extraído:", mensaje);
-
-    const payload = qs.stringify({
-      numero,
-      mensaje,
-      json_payload: JSON.stringify(req.body)
-    });
-
-    console.log("📤 Enviando a Zoho:", payload);
-
+    // Envía el objeto payload COMO JSON directamente
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/json' }
     });
 
-    console.log("✅ Respuesta Zoho:", response.data);
-
+    console.log('✅ Respuesta Zoho:', response.data);
     res.sendStatus(200);
+
   } catch (error) {
-    console.error("❌ Error en webhook:", error.response?.data || error.message);
-    res.status(500).send("Error interno");
+    console.error('❌ Error en webhook:', error.response?.data || error.message);
+    res.status(500).send('Error interno');
   }
 });
 
