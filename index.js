@@ -31,18 +31,17 @@ app.get('/webhook', (req, res) => {
 -------------------------------------------- */
 app.post('/webhook', async (req, res) => {
   try {
-    console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
-
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
 
-    let numero = "";
+     if (!value?.messages || !value.messages[0]) {
+      console.warn("⚠️ No se encontró value.messages[0], ignorando evento.");
+      return res.sendStatus(200); // OK, ignorar este evento
+    }
+     const message = value.messages[0];
+    const numero = message.from || "";
     let mensaje = "";
-
-    if (value?.messages && value.messages[0]) {
-      const message = value.messages[0];
-      numero = message.from || "";
 
       // Extraer contenido según tipo de mensaje
       if (message?.text?.body) {
