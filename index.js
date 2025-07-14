@@ -9,7 +9,7 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.7ac01f6d1f55de25633046b3881a02ed.3936bae7c6809a39aded361220909e9b';
 
-// ✅ Validación del Webhook de Meta
+// ✅ Verificación de Webhook con Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -24,7 +24,7 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// ✅ Manejo de mensajes entrantes
+// ✅ Webhook POST - recepción de mensajes
 app.post('/webhook', async (req, res) => {
   try {
     console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
@@ -32,30 +32,40 @@ app.post('/webhook', async (req, res) => {
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
-    const message = value?.messages?.[0];
 
-    const numero = message?.from || "";
+    console.log("🧩 Cambio recibido:", JSON.stringify(change, null, 2));
+    console.log("🧩 Value:", JSON.stringify(value, null, 2));
+
+    let numero = "";
     let mensaje = "";
 
-    // ✅ Extracción robusta de contenido según tipo
-    if (message?.text?.body) {
-      mensaje = message.text.body;
-    } else if (message?.type === "image" && message?.image?.caption) {
-      mensaje = message.image.caption;
-    } else if (message?.type === "image") {
-      mensaje = "[Imagen recibida]";
-    } else if (message?.type === "audio") {
-      mensaje = "[Audio recibido]";
-    } else if (message?.type === "video") {
-      mensaje = "[Video recibido]";
-    } else if (message?.type === "sticker") {
-      mensaje = "[Sticker recibido]";
-    } else if (message?.type === "button") {
-      mensaje = `[Botón presionado: ${message.button.text}]`;
-    } else if (message?.type === "interactive") {
-      mensaje = `[Interacción: ${JSON.stringify(message.interactive)}]`;
+    // ✅ Solo si hay mensaje
+    if (value?.messages && value.messages[0]) {
+      const message = value.messages[0];
+      numero = message.from || "";
+
+      // ✅ Manejo robusto por tipo de mensaje
+      if (message?.text?.body) {
+        mensaje = message.text.body;
+      } else if (message?.type === "image" && message?.image?.caption) {
+        mensaje = message.image.caption;
+      } else if (message?.type === "image") {
+        mensaje = "[Imagen recibida]";
+      } else if (message?.type === "audio") {
+        mensaje = "[Audio recibido]";
+      } else if (message?.type === "video") {
+        mensaje = "[Video recibido]";
+      } else if (message?.type === "sticker") {
+        mensaje = "[Sticker recibido]";
+      } else if (message?.type === "button") {
+        mensaje = `[Botón presionado: ${message.button.text}]`;
+      } else if (message?.type === "interactive") {
+        mensaje = `[Interacción: ${JSON.stringify(message.interactive)}]`;
+      } else {
+        mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
+      }
     } else {
-      mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
+      console.warn("⚠️ No se encontró value.messages[0]");
     }
 
     const json_payload = JSON.stringify(req.body);
@@ -64,11 +74,11 @@ app.post('/webhook', async (req, res) => {
     console.log("🧪 Mensaje extraído:", mensaje);
 
     if (!numero || !mensaje) {
-      console.warn("⚠️ Número o mensaje vacíos.");
+      console.warn("⚠️ Número o mensaje vacíos. No se enviará a Zoho.");
       return res.sendStatus(400);
     }
 
-    // ✅ Enviar a Zoho como JSON
+    // ✅ Enviar a función Deluge
     const payload = {
       numero,
       mensaje,
