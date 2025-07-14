@@ -24,10 +24,10 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// ✅ Manejo de mensajes entrantes desde WhatsApp
+// ✅ Procesamiento de mensajes entrantes de WhatsApp
 app.post('/webhook', async (req, res) => {
   try {
-    console.log("📥 Payload recibido:", JSON.stringify(req.body));
+    console.log("📥 Payload recibido:", JSON.stringify(req.body, null, 2));
 
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
@@ -35,7 +35,25 @@ app.post('/webhook', async (req, res) => {
     const message = value?.messages?.[0];
 
     const numero = message?.from || "";
-    const mensaje = message?.text?.body || "";
+    let mensaje = "";
+
+    // 🔍 Lógica robusta para tipos de mensaje
+    if (message?.text?.body) {
+      mensaje = message.text.body;
+    } else if (message?.type === "image" && message?.image?.caption) {
+      mensaje = message.image.caption;
+    } else if (message?.type === "image") {
+      mensaje = "[Imagen recibida]";
+    } else if (message?.type === "audio") {
+      mensaje = "[Audio recibido]";
+    } else if (message?.type === "video") {
+      mensaje = "[Video recibido]";
+    } else if (message?.type === "sticker") {
+      mensaje = "[Sticker recibido]";
+    } else {
+      mensaje = `[${message?.type || "mensaje no reconocido"} recibido]`;
+    }
+
     const json_payload = JSON.stringify(req.body);
 
     console.log("🧪 Número extraído:", numero);
@@ -46,25 +64,16 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(400);
     }
 
-    // ✅ Codificar los parámetros en formato x-www-form-urlencoded
-    const params = qs.stringify({
-      numero,
-      mensaje,
-      json_payload
-    });
-
-    console.log("📤 Enviando a Zoho:", params);
+    const params = qs.stringify({ numero, mensaje, json_payload });
 
     const response = await axios.post(ZOHO_FUNCTION_URL, params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    console.log("✅ Respuesta de Zoho:", response.data);
+    console.log("✅ Enviado a Zoho:", response.data);
     res.sendStatus(200);
   } catch (err) {
-    console.error("❌ Error:", err.message);
+    console.error("❌ Error procesando webhook:", err.message);
     res.sendStatus(500);
   }
 });
