@@ -35,36 +35,36 @@ app.post('/webhook', async (req, res) => {
     const change = entry?.changes?.[0];
     const value = change?.value;
 
-     if (!value?.messages || !value.messages[0]) {
+    if (!value?.messages || !value.messages[0]) {
       console.warn("⚠️ No se encontró value.messages[0], ignorando evento.");
       return res.sendStatus(200); // OK, ignorar este evento
     }
-     const message = value.messages[0];
+
+    const message = value.messages[0];
     const numero = message.from || "";
     let mensaje = "";
 
-      // Extraer contenido según tipo de mensaje
-      if (message?.text?.body) {
-        mensaje = message.text.body;
-      } else if (message?.type === "image" && message?.image?.caption) {
-        mensaje = message.image.caption;
-      } else if (message?.type === "image") {
-        mensaje = "[Imagen recibida]";
-      } else if (message?.type === "audio") {
-        mensaje = "[Audio recibido]";
-      } else if (message?.type === "video") {
-        mensaje = "[Video recibido]";
-      } else if (message?.type === "sticker") {
-        mensaje = "[Sticker recibido]";
-      } else if (message?.type === "button") {
-        mensaje = `[Botón presionado: ${message.button.text}]`;
-      } else if (message?.type === "interactive") {
-        mensaje = `[Interacción: ${JSON.stringify(message.interactive)}]`;
-      } else {
-        mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
-      }
-    } 
-     
+    // Extraer contenido según tipo de mensaje
+    if (message?.text?.body) {
+      mensaje = message.text.body;
+    } else if (message?.type === "image" && message?.image?.caption) {
+      mensaje = message.image.caption;
+    } else if (message?.type === "image") {
+      mensaje = "[Imagen recibida]";
+    } else if (message?.type === "audio") {
+      mensaje = "[Audio recibido]";
+    } else if (message?.type === "video") {
+      mensaje = "[Video recibido]";
+    } else if (message?.type === "sticker") {
+      mensaje = "[Sticker recibido]";
+    } else if (message?.type === "button") {
+      mensaje = `[Botón presionado: ${message.button.text}]`;
+    } else if (message?.type === "interactive") {
+      mensaje = `[Interacción: ${JSON.stringify(message.interactive)}]`;
+    } else {
+      mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
+    }
+
     // Log intermedio
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
@@ -82,7 +82,7 @@ app.post('/webhook', async (req, res) => {
       json_payload: JSON.stringify(req.body) // opcional: enviar todo el JSON
     });
 
-     console.log("📤 Payload que se enviará a Zoho (form-urlencoded):", payload);
+    console.log("📤 Payload que se enviará a Zoho (form-urlencoded):", payload);
 
     // Enviar a Zoho
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
