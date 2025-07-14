@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs');  // ✅ Librería para codificar como x-www-form-urlencoded
+const qs = require('qs');  // ✅ Para codificar como x-www-form-urlencoded
 const app = express();
 
 app.use(express.json());
@@ -9,7 +9,7 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.03b63b6e4e623744f73f7fffbddb4902.8699f916ad4a321667d278b4e23182c4';
 
-// Validación de Webhook
+// ✅ Validación del Webhook de Meta
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -24,7 +24,7 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// Recepción de mensajes WhatsApp
+// ✅ Manejo de mensajes entrantes desde WhatsApp
 app.post('/webhook', async (req, res) => {
   try {
     console.log("📥 Payload recibido:", JSON.stringify(req.body));
@@ -36,18 +36,17 @@ app.post('/webhook', async (req, res) => {
 
     const numero = message?.from || "";
     const mensaje = message?.text?.body || "";
-    const json_payload = JSON.stringify(req.body); // Opcional, para log
+    const json_payload = JSON.stringify(req.body);
 
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    // Validación básica
     if (!numero || !mensaje) {
       console.warn("⚠️ Número o mensaje vacíos.");
       return res.sendStatus(400);
     }
 
-    // Convertir a formato x-www-form-urlencoded
+    // ✅ Codificar los parámetros en formato x-www-form-urlencoded
     const params = qs.stringify({
       numero,
       mensaje,
@@ -57,7 +56,9 @@ app.post('/webhook', async (req, res) => {
     console.log("📤 Enviando a Zoho:", params);
 
     const response = await axios.post(ZOHO_FUNCTION_URL, params, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
 
     console.log("✅ Respuesta de Zoho:", response.data);
