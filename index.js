@@ -28,17 +28,15 @@ app.post('/webhook', async (req, res) => {
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    // Payload para enviar a Zoho
     const payload = qs.stringify({
       numero,
       mensaje,
       json_payload: JSON.stringify(req.body)
     });
 
-     const formData = qs.stringify(payload);
     console.log("📤 Enviando a Zoho:", payload);
 
-    const response = await axios.post(ZOHO_FUNCTION_URL, formData, {
+    const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
