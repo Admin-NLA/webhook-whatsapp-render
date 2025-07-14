@@ -5,11 +5,8 @@ const qs = require('qs');
 const app = express();
 app.use(express.json());
 
-// ✅ Access Token OAuth2 válido (dura 1 hora)
-const ACCESS_TOKEN = '1000.d925407acfdc53f5efdb258c75ab9a6c.de8bf253762992c41067642a635f80e6';
-
-// ✅ URL de tu función Deluge con OAuth2
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=oauth';
+// ✅ URL de tu función Deluge
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.dc57ed21c847a6381321b9721e9dc383.628eca773dc3d1a65f03a293653c670d';
 
 /* -------------------------------------------
    ✅ PROCESAR MENSAJES ENTRANTES
@@ -38,21 +35,20 @@ app.post('/webhook', async (req, res) => {
       json_payload: JSON.stringify(req.body)
     });
 
-    console.log("📤 Enviando a Zoho (OAuth):", payload);
+    console.log("📤 Enviando a Zoho:", payload);
 
-    // Enviar a función Deluge usando OAuth2
-    const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
+    /const response = await axios.post(ZOHO_FUNCTION_URL, formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Zoho-oauthtoken ${ACCESS_TOKEN}`
-      }
+      },
     });
 
     console.log("✅ Respuesta Zoho:", response.data);
+
     res.sendStatus(200);
-  } catch (err) {
-    console.error("❌ Error en webhook:", err.response?.data || err.message);
-    res.status(500).send('Error en servidor');
+  } catch (error) {
+    console.error("❌ Error en webhook:", error.response?.data || error.message);
+    res.status(500).send("Error interno");
   }
 });
 
