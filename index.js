@@ -1,12 +1,15 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs'); // ✅ Para codificar x-www-form-urlencoded
+const qs = require('qs');
 
 const app = express();
 app.use(express.json());
 
-// ✅ Token y URL de función Deluge (standalone)
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.aafb07e6eca6742524076dc726f9d612.4b1b6813f57700e02e084366be7dbd77';
+// ⚙️ Access Token de OAuth Zoho
+const ZOHO_ACCESS_TOKEN = '000.138b739e688df47f07b8b3a096568ebb.88fe15b8a54693b314573b7951fb7fb6'; // Reemplaza por tu token válido
+
+// ⚙️ URL de la función Deluge (sin zapikey)
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=oauth';
 
 app.post('/webhook', async (req, res) => {
   try {
@@ -20,35 +23,44 @@ app.post('/webhook', async (req, res) => {
     }
 
     const numero = message.from;
-    const mensaje = message.text?.body || "[Sin texto]";
-    const json_payload = JSON.stringify(req.body);
+    let mensaje = "";
+
+    if (message.text?.body) {
+      mensaje = message.text.body;
+    } else {
+      mensaje = "[Tipo de mensaje no compatible]";
+    }
 
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    const payload = qs.stringify({
+    const payload = {
       numero,
       mensaje,
-      json_payload
-    });
+      json_payload: JSON.stringify(req.body)
+    };
 
-    console.log("📤 Enviando a Zoho:", payload);
+    const formData = qs.stringify(payload);
 
-    const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
+    console.log("📤 Enviando a Zoho (OAuth):", payload);
+
+    const response = await axios.post(ZOHO_FUNCTION_URL, formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Zoho-oauthtoken ${ZOHO_ACCESS_TOKEN}`
       }
     });
 
     console.log("✅ Respuesta Zoho:", response.data);
     res.sendStatus(200);
+
   } catch (err) {
     console.error("❌ Error:", err.message);
-    res.sendStatus(500);
+    res.status(500).send('Error interno del servidor');
   }
 });
 
-const PORT = parseInt(process.env.PORT) || 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor escuchando en puerto ${PORT}`);
 });
