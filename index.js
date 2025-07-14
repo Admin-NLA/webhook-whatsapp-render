@@ -7,7 +7,7 @@ app.use(express.json());
 
 // ✅ Token y URL de función Deluge (standalone)
 const VERIFY_TOKEN = 'zoho2025';
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.b22046226a141976ea4c8a51cf8eb73e.f16aa9a4d222d6064995247bdd2bfd7c';
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.aafb07e6eca6742524076dc726f9d612.4b1b6813f57700e02e084366be7dbd77';
 
 app.post('/webhook', async (req, res) => {
   try {
@@ -32,17 +32,24 @@ app.post('/webhook', async (req, res) => {
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    const payload = qs.stringify({
-      numero,
-      mensaje,
-      json_payload: JSON.stringify(req.body)
-    });
-
+    // Crear el payload como objeto plano
+const payload = {
+  numero: numero,
+  mensaje: mensaje,
+  json_payload: JSON.stringify(req.body),
+};
+    
+// Serializar correctamente el payload
+const formData = qs.stringify(payload);
+    
     console.log("📤 Enviando a Zoho:", payload);
 
-    const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
+ // Enviar con headers correctos
+await axios.post(ZOHO_FUNCTION_URL, formData, {
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  },
+});
 
     console.log("✅ Respuesta Zoho:", response.data);
     res.sendStatus(200);
