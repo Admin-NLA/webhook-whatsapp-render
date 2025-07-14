@@ -1,7 +1,8 @@
 const express = require('express');
 const axios = require('axios');
-const app = express();
+const qs = require('qs');
 
+const app = express();
 app.use(express.json());
 
 // Configuración
@@ -15,24 +16,19 @@ app.get('/webhook', (req, res) => {
   const challenge = req.query['hub.challenge'];
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('✅ Webhook verificado con Meta');
     return res.status(200).send(challenge);
   } else {
-    console.warn('❌ Verificación fallida');
     return res.sendStatus(403);
   }
 });
 
-// RUTA para procesar mensajes entrantes (POST)
 app.post('/webhook', async (req, res) => {
   try {
-    // Extraer datos del body (según payload WhatsApp)
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
 
     if (!value?.messages || !value.messages[0]) {
-      console.warn("⚠️ No hay mensajes en el payload, ignorando");
       return res.sendStatus(200);
     }
 
@@ -42,42 +38,25 @@ app.post('/webhook', async (req, res) => {
 
     if (message?.text?.body) {
       mensaje = message.text.body;
-    } else if (message?.type === "image" && message?.image?.caption) {
-      mensaje = message.image.caption;
-    } else if (message?.type === "image") {
-      mensaje = "[Imagen recibida]";
-    } else if (message?.type === "audio") {
-      mensaje = "[Audio recibido]";
-    } else if (message?.type === "video") {
-      mensaje = "[Video recibido]";
-    } else if (message?.type === "sticker") {
-      mensaje = "[Sticker recibido]";
-    } else if (message?.type === "button") {
-      mensaje = `[Botón presionado: ${message.button.text}]`;
-    } else if (message?.type === "interactive") {
-      mensaje = `[Interacción: ${JSON.stringify(message.interactive)}]`;
     } else {
-      mensaje = `[Tipo desconocido: ${message?.type || "sin tipo"}]`;
+      mensaje = "[Tipo no soportado]";
     }
 
-    // Validar datos
     if (!numero || !mensaje) {
-      console.warn("⚠️ Número o mensaje vacíos");
       return res.sendStatus(400);
     }
 
-    // Construir payload para Zoho
-    const payload = {
+    // Enviar como form-urlencoded
+    const payload = qs.stringify({
       numero,
       mensaje,
       json_payload: JSON.stringify(req.body)
-    };
+    });
 
-    console.log("📤 Enviando a Zoho:", payload);
+    console.log("📤 Payload que se enviará a Zoho (form-urlencoded):", payload);
 
-    // Llamar función Zoho con axios POST JSON
     const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
     console.log("✅ Respuesta Zoho:", response.data);
