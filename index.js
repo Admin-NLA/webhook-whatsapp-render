@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-// const qs = require('qs');  ✅ Librería para codificar como x-www-form-urlencoded
+const qs = require('qs');  // ✅ Librería para codificar como x-www-form-urlencoded
 const app = express();
 
 app.use(express.json());
@@ -9,62 +9,62 @@ app.use(express.json());
 const VERIFY_TOKEN = 'zoho2025';
 const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.03b63b6e4e623744f73f7fffbddb4902.8699f916ad4a321667d278b4e23182c4';
 
-// Validación de webhook Meta
+// Validación de Webhook
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('✅ Webhook verificado con Meta');
-    return res.status(200).send(challenge);
+    console.log('✅ Webhook verificado');
+    res.status(200).send(challenge);
   } else {
     console.warn('❌ Verificación fallida');
-    return res.sendStatus(403);
+    res.sendStatus(403);
   }
 });
 
 // Recepción de mensajes WhatsApp
 app.post('/webhook', async (req, res) => {
   try {
-    console.log('📥 Payload recibido:', JSON.stringify(req.body));
+    console.log("📥 Payload recibido:", JSON.stringify(req.body));
 
-    // Extraer datos de WhatsApp
     const entry = req.body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
-    const firstMessage = value?.messages?.[0];
+    const message = value?.messages?.[0];
 
-    const numero = firstMessage?.from || "";
-    const mensaje = firstMessage?.text?.body || "";
+    const numero = message?.from || "";
+    const mensaje = message?.text?.body || "";
+    const json_payload = JSON.stringify(req.body); // Opcional, para log
 
     console.log("🧪 Número extraído:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
+    // Validación básica
     if (!numero || !mensaje) {
-      console.warn("⚠️ Número o mensaje vacíos, no se enviará a Zoho.");
+      console.warn("⚠️ Número o mensaje vacíos.");
       return res.sendStatus(400);
     }
 
-    // Preparar payload JSON con los parámetros planos y el payload completo en json_payload
-    const payload = {
-      numero: numero,
-      mensaje: mensaje,
-      json_payload: JSON.stringify(req.body)
-    };
-
-    console.log("📤 Enviando a Zoho:", payload);
-
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, payload, {
-      headers: { 'Content-Type': 'application/json' }
+    // Convertir a formato x-www-form-urlencoded
+    const params = qs.stringify({
+      numero,
+      mensaje,
+      json_payload
     });
 
-    console.log("✅ Respuesta de Zoho:", zohoResponse.data);
-    return res.sendStatus(200);
+    console.log("📤 Enviando a Zoho:", params);
 
-  } catch (error) {
-    console.error("❌ Error enviando a Zoho:", error.message);
-    return res.sendStatus(500);
+    const response = await axios.post(ZOHO_FUNCTION_URL, params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+
+    console.log("✅ Respuesta de Zoho:", response.data);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("❌ Error:", err.message);
+    res.sendStatus(500);
   }
 });
 
