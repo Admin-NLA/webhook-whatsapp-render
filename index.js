@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
- //  const qs = require('qs'); ✅ Para codificar como x-www-form-urlencoded
+const qs = require('qs'); ✅ Para codificar como x-www-form-urlencoded
 const app = express();
 
 app.use(express.json());
