@@ -44,8 +44,8 @@ const formData = qs.stringify(payload);
     
     console.log("📤 Enviando a Zoho:", payload);
 
- // Enviar con headers correctos
-await axios.post(ZOHO_FUNCTION_URL, formData, {
+ // ✅ ASIGNAR LA RESPUESTA
+const response = await axios.post(ZOHO_FUNCTION_URL, formData, {
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded',
   },
