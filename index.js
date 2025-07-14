@@ -7,7 +7,7 @@ app.use(express.json());
 
 // ✅ Token y URL de función Deluge (standalone)
 const VERIFY_TOKEN = 'zoho2025';
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_standalone/actions/execute?auth_type=apikey&zapikey=1003.b22046226a141976ea4c8a51cf8eb73e.f16aa9a4d222d6064995247bdd2bfd7c';
+const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.b22046226a141976ea4c8a51cf8eb73e.f16aa9a4d222d6064995247bdd2bfd7c';
 
 app.post('/webhook', async (req, res) => {
   try {
