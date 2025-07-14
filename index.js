@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs');
+const qs = require('qs'); // ✅ Librería para codificar como x-www-form-urlencoded
 const app = express();
 
 app.use(express.json());
@@ -35,32 +35,29 @@ app.post('/webhook', async (req, res) => {
     const value = change?.value;
     const firstMessage = value?.messages?.[0];
 
-    const numero = firstMessage?.from || "";
+    const numero = (firstMessage?.from || "").replace(/[^\d]/g, '').slice(0, 13);
     const mensaje = firstMessage?.text?.body || "";
 
-    console.log("🧪 Número original extraído:", numero);
+    console.log("🧪 Número limpio:", numero);
     console.log("🧪 Mensaje extraído:", mensaje);
 
-    // ✅ Validación adicional de longitud y limpieza del número
-    const numeroLimpio = numero.replace(/[^\d]/g, '').slice(0, 13);  // Elimina caracteres no numéricos y corta a 13 dígitos
-    console.log("🔎 Número limpio:", numeroLimpio, "| longitud:", numeroLimpio.length);
-
-    // ⚠️ Validar que el número y mensaje no estén vacíos
-    if (!numeroLimpio || !mensaje) {
-      console.warn("⚠️ Número o mensaje vacíos, no se enviará a Zoho.");
+    if (!numero || !mensaje) {
+      console.warn("⚠️ Número o mensaje vacíos. No se enviará a Zoho.");
       return res.sendStatus(400);
     }
 
-    // 📦 Convertir los datos a formato x-www-form-urlencoded
-    const params = qs.stringify({ numero: numeroLimpio, mensaje });
-    console.log("📤 Payload a Zoho:", params);
+    // ✅ Codificar como x-www-form-urlencoded
+    const data = qs.stringify({ numero, mensaje });
 
-    // 🚀 Enviar los datos a Zoho CRM vía Deluge Function
-    const zohoResponse = await axios.post(ZOHO_FUNCTION_URL, params, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    console.log("📤 Enviando a Zoho como x-www-form-urlencoded:", data);
+
+    const response = await axios.post(ZOHO_FUNCTION_URL, data, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
 
-    console.log("✅ Respuesta de Zoho:", zohoResponse.data);
+    console.log("✅ Respuesta de Zoho:", response.data);
     res.sendStatus(200);
   } catch (error) {
     console.error("❌ Error enviando a Zoho:", error.message);
