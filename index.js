@@ -9,6 +9,7 @@ app.use(express.json());
 const CLIENT_ID = '000.KU5DM59YJO9HM8M9A26SPCMXGJ5BRF';
 const CLIENT_SECRET = '5fb349dba4dc5bdcd24b80f65d8e3706c54b2516e5';
 const REFRESH_TOKEN = '1000.4274e1a0f127c547054548241e196d7d.f2b67671d6d4c2451375b7265596bd69';
+
 // Estado para guardar el access_token y su expiración
 let accessToken = null;
 let tokenExpiresAt = 0;
@@ -28,12 +29,9 @@ async function ensureAccessToken() {
     try {
       const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', params);
       accessToken = response.data.access_token;
-
-      // token_type suele ser 'Bearer'
-      const expiresIn = response.data.expires_in; // en segundos, típicamente 3600
-      tokenExpiresAt = now + (expiresIn - 60) * 1000; // renueva 1 min antes de expirar
-
-      console.log('✅ Nuevo access_token obtenido');
+      const expiresIn = response.data.expires_in; // en segundos
+      tokenExpiresAt = now + (expiresIn - 60) * 1000; // renovar 1 min antes de expirar
+      console.log('✅ Nuevo access_token obtenido:', accessToken.slice(0, 10) + '...');
     } catch (error) {
       console.error('❌ Error al renovar token:', error.response?.data || error.message);
       throw error;
@@ -41,35 +39,37 @@ async function ensureAccessToken() {
   }
 }
 
-// Ejemplo de endpoint webhook que envía datos a función Zoho usando OAuth2
+// Endpoint para webhook WhatsApp
 app.post('/webhook', async (req, res) => {
   try {
-    // Extrae datos de tu webhook WhatsApp (ajusta según tu payload)
+    // Extraer datos WhatsApp
     const entry = req.body.entry?.[0];
     const value = entry?.changes?.[0]?.value;
     const message = value?.messages?.[0];
 
     if (!message || !message.from) {
-      return res.sendStatus(200); // ignorar
+      console.log("⚠️ Sin mensaje válido, ignorando.");
+      return res.sendStatus(200);
     }
 
     const numero = message.from;
     const mensaje = message.text?.body || '[Tipo no soportado]';
 
-    // Asegúrate de tener access_token válido
+    console.log('🧪 Número extraído:', numero);
+    console.log('🧪 Mensaje extraído:', mensaje);
+
     await ensureAccessToken();
 
-    // Payload para función Deluge Zoho
+    // Payload x-www-form-urlencoded para Zoho
     const payload = qs.stringify({
       numero,
       mensaje,
-      json_payload: JSON.stringify(req.body)
+      json_payload: JSON.stringify(req.body),
     });
 
-    // URL de la función Deluge (sin apiKey, con OAuth2)
     const functionUrl = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=oauth';
 
-    // Llamada a Zoho con token en header Authorization
+    // Llamar función Deluge con OAuth2
     const response = await axios.post(functionUrl, payload, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
