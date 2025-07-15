@@ -34,9 +34,10 @@ app.post('/webhook-whatsapp', async (req, res) => {
   }
 });
 
-
-// 🚀 Iniciar servidor en Render
+/* -------------------------------------------
+   🚀 INICIAR SERVIDOR
+-------------------------------------------- */
 const PORT = parseInt(process.env.PORT) || 3000;
 app.listen(PORT, () => {
-  console.log(✅ Servidor escuchando en puerto ${PORT});
+  console.log(`✅ Servidor escuchando en puerto ${PORT}`);
 });
