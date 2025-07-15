@@ -5,7 +5,7 @@ app.use(express.json()); // Asegura que el cuerpo JSON sea leído correctamente
 
 const ZOHO_FLOW_WEBHOOK = 'https://flow.zoho.com/716055707/flow/webhook/incoming?zapikey=1001.2dc963ebd52a5e0694b57ff0f07a3d50.df5a07214529691b4331959238949800&isdebug=true'; // 🟢 Usa tu URL real
 
-/ Ruta principal de Meta Webhook
+// Ruta principal de Meta Webhook
 app.post('/webhook', async (req, res) => {
   try {
     const body = req.body;
