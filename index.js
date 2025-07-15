@@ -1,50 +1,40 @@
 const express = require('express');
 const axios = require('axios');
-const qs = require('qs');
-
 const app = express();
-app.use(express.json());
+app.use(express.json()); // Asegura que el cuerpo JSON sea leído correctamente
 
-// ✅ URL de tu función Deluge
-const ZOHO_FUNCTION_URL = 'https://www.zohoapis.com/crm/v7/functions/whatsapp_handler_v2/actions/execute?auth_type=apikey&zapikey=1003.dc57ed21c847a6381321b9721e9dc383.628eca773dc3d1a65f03a293653c670d';
+const ZOHO_FLOW_WEBHOOK = 'https://flow.zoho.com/716055707/flow/webhook/incoming?zapikey=1001.2dc963ebd52a5e0694b57ff0f07a3d50.df5a07214529691b4331959238949800&isdebug=true'; // 🟢 Usa tu URL real
 
-/* -------------------------------------------
-   ✅ PROCESAR MENSAJES ENTRANTES
--------------------------------------------- */
-app.post('/webhook', async (req, res) => {
+app.post('/webhook-whatsapp', async (req, res) => {
   try {
-    const entry = req.body.entry?.[0];
-    const value = entry?.changes?.[0]?.value;
-    const message = value?.messages?.[0];
+    const body = req.body;
 
-    if (!message || !message.from) return res.sendStatus(200);
-     
-    const payload = {
-      numero: message.from,
-      mensaje: message.text?.body || '[tipo no soportado]',
-      json_payload: req.body
-    };
+    // ✅ Extraer datos desde el payload de WhatsApp (Meta)
+    const numero = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0]?.wa_id;
+    const mensaje = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.text?.body;
 
-    console.log('🧪 Enviando payload completo a Zoho:', payload);
+    if (!numero || !mensaje) {
+      console.log('⚠️ Datos incompletos recibidos');
+      return res.sendStatus(400);
+    }
 
-    // Envía el objeto payload COMO JSON directamente
-    const response = await axios.post(ZOHO_FUNCTION_URL, payload, {
+    // 🔁 Enviar a Zoho Flow
+    const response = await axios.post(ZOHO_FLOW_WEBHOOK, {
+      numero,
+      mensaje
+    }, {
       headers: { 'Content-Type': 'application/json' }
     });
 
-    console.log('✅ Respuesta Zoho:', response.data);
+    console.log('📤 Enviado a Zoho Flow:', response.status);
     res.sendStatus(200);
-
   } catch (error) {
-    console.error('❌ Error en webhook:', error.response?.data || error.message);
-    res.status(500).send('Error interno');
+    console.error('❌ Error enviando a Zoho Flow:', error.message);
+    res.sendStatus(500);
   }
 });
 
-/* -------------------------------------------
-   🚀 INICIAR SERVIDOR
--------------------------------------------- */
-const PORT = parseInt(process.env.PORT) || 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor escuchando en puerto ${PORT}`);
 });
