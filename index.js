@@ -21,15 +21,15 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(400);
     }
 
-    // 🔁 Reenviar a Zoho Flow
-    await axios.post(ZOHO_FLOW_WEBHOOK, {
-      numero,
-      mensaje
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    // En index.js al reenviar a Zoho Flow, añade tipo:
+await axios.post(ZOHO_FLOW_WEBHOOK, {
+  numero,
+  mensaje,
+  tipo: 'Entrante',
+  fecha: new Date().toISOString()
+}, {
+  headers: { 'Content-Type': 'application/json' }
+});
 
     console.log('✅ Mensaje enviado a Zoho Flow');
     res.sendStatus(200);
