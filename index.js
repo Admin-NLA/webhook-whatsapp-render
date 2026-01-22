@@ -17,8 +17,8 @@ app.post('/webhook', async (req, res) => {
     console.log('📥 Mensaje entrante:', { numero, mensaje });
 
     if (!numero || !mensaje) {
-      console.warn('⚠️ No se pudo extraer número o mensaje.');
-      return res.sendStatus(400);
+      console.warn('⚠️ Evento ignorado (no es mensaje de texto)');
+      return res.sendStatus(200); // 👈 SIEMPRE 200
     }
 
     // En index.js al reenviar a Zoho Flow, añade tipo:
